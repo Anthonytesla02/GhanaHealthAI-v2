@@ -106,28 +106,31 @@ class CaseStudyGenerator:
         if self.mistral_client:
             try:
                 prompt = f"""
-Based on the Ghana Standard Treatment Guidelines, generate a realistic medical case study for {illness}.
+Generate a concise medical case study for pharmacists based on Ghana Standard Treatment Guidelines.
 
-Medical Context from Guidelines:
+Medical Context:
 {context_text}
 
-Create a case study that includes:
-1. Patient demographics (age, gender, occupation)
-2. Chief complaint and history of present illness
-3. Relevant symptoms and physical findings
-4. Any relevant past medical history
-5. Make it realistic for a Ghanaian healthcare setting
+Create a brief case with ONLY these sections:
 
-The case should be challenging but solvable with the provided medical knowledge.
-Format as a narrative case presentation suitable for medical students.
+PATIENT INFO: Name, age, gender, occupation (one line)
+PRESENTING COMPLAINTS: 3-5 key symptoms with duration and severity
+MEDICAL HISTORY: Relevant past conditions and current medications (if any)
 
-Generate ONLY the case description without revealing the diagnosis or treatment.
+Requirements:
+- Keep each section very brief (1-2 sentences max)
+- Focus on symptoms that help with diagnosis
+- Make it realistic for Ghana healthcare setting
+- Do NOT mention the actual illness name
+- Target pharmacist-level assessment
+
+Format exactly as shown above with clear section headers.
 """
 
                 response = self.mistral_client.chat(
                     model="mistral-large-latest",
                     messages=[ChatMessage(role="user", content=prompt)],
-                    max_tokens=500
+                    max_tokens=300
                 )
                 
                 case_description = response.choices[0].message.content.strip()

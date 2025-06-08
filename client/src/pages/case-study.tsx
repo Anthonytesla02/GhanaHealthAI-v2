@@ -20,6 +20,66 @@ interface CaseStudyState {
   showResults: boolean;
 }
 
+// Helper function to parse and display case description in structured format
+const parseCaseDescription = (description: string) => {
+  const sections = description.split(/(?=PATIENT INFO:|PRESENTING COMPLAINTS:|MEDICAL HISTORY:)/);
+  
+  return (
+    <div className="space-y-4">
+      {sections.map((section, index) => {
+        if (!section.trim()) return null;
+        
+        const lines = section.trim().split('\n');
+        const header = lines[0];
+        const content = lines.slice(1).join(' ').trim();
+        
+        if (header.includes('PATIENT INFO:')) {
+          return (
+            <div key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                <i className="fas fa-user text-blue-600"></i>
+                Patient Information
+              </h4>
+              <p className="text-gray-700">{content || header.replace('PATIENT INFO:', '').trim()}</p>
+            </div>
+          );
+        }
+        
+        if (header.includes('PRESENTING COMPLAINTS:')) {
+          return (
+            <div key={index} className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <h4 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                <i className="fas fa-exclamation-triangle text-orange-600"></i>
+                Presenting Complaints
+              </h4>
+              <p className="text-gray-700">{content || header.replace('PRESENTING COMPLAINTS:', '').trim()}</p>
+            </div>
+          );
+        }
+        
+        if (header.includes('MEDICAL HISTORY:')) {
+          return (
+            <div key={index} className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                <i className="fas fa-history text-green-600"></i>
+                Medical History
+              </h4>
+              <p className="text-gray-700">{content || header.replace('MEDICAL HISTORY:', '').trim()}</p>
+            </div>
+          );
+        }
+        
+        // Fallback for unstructured content
+        return (
+          <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-gray-700 whitespace-pre-wrap">{section.trim()}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function CaseStudyPage() {
   const [state, setState] = useState<CaseStudyState>({
     currentCaseStudy: null,
@@ -154,7 +214,7 @@ export default function CaseStudyPage() {
             </div>
             <h2 className="text-xl font-semibold mb-2">Ready to Practice?</h2>
             <p className="text-gray-600 mb-6">
-              Generate a realistic medical case study and test your diagnostic skills.
+              Generate a realistic medical case study designed for pharmacist training. Test your diagnostic skills using patient symptoms and medical history.
             </p>
           </div>
           
@@ -186,24 +246,19 @@ export default function CaseStudyPage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          {/* Patient Information Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Case Study</span>
-                <Badge variant="outline">
-                  {state.currentCaseStudy.illness}
-                </Badge>
+              <CardTitle className="flex items-center gap-2">
+                <i className="fas fa-user-injured text-blue-600"></i>
+                Patient Case
               </CardTitle>
               <CardDescription>
-                Read the case carefully and provide your diagnosis and treatment plan.
+                Review the patient information and symptoms carefully.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                  {state.currentCaseStudy.caseDescription}
-                </p>
-              </div>
+              {parseCaseDescription(state.currentCaseStudy.caseDescription)}
             </CardContent>
           </Card>
 
