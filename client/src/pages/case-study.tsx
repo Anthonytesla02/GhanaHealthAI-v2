@@ -10,7 +10,23 @@ import { Progress } from "@/components/ui/progress";
 import { generateCaseStudy, submitCaseStudyAnswers } from "@/lib/case-study-api";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import type { CaseStudyResponse, CaseStudyResult } from "@shared/schema";
+// Type definitions for case study functionality
+interface CaseStudyResponse {
+  id: number;
+  sessionId: string;
+  illness: string;
+  caseDescription: string;
+  isCompleted: boolean;
+}
+
+interface CaseStudyResult {
+  diagnosisScore: number;
+  treatmentScore: number;
+  feedback: string;
+  correctDiagnosis: string;
+  correctTreatment: string;
+  isCompleted: boolean;
+}
 
 interface CaseStudyState {
   currentCaseStudy: CaseStudyResponse | null;
@@ -21,50 +37,55 @@ interface CaseStudyState {
 }
 
 // Helper function to parse and display case description in structured format
-const parseCaseDescription = (description: string) => {
-  const sections = description.split(/(?=PATIENT INFO:|PRESENTING COMPLAINTS:|MEDICAL HISTORY:)/);
+function parseCaseDescription(description: string) {
+  // Handle both markdown-style (**) and plain text formatting
+  const sections = description.split(/(?=\*?\*?PATIENT INFO:|\*?\*?PRESENTING COMPLAINTS:|\*?\*?MEDICAL HISTORY:)/);
   
   return (
     <div className="space-y-4">
       {sections.map((section, index) => {
         if (!section.trim()) return null;
         
-        const lines = section.trim().split('\n');
+        const cleanSection = section.replace(/\*\*/g, '').trim();
+        const lines = cleanSection.split('\n');
         const header = lines[0];
         const content = lines.slice(1).join(' ').trim();
         
         if (header.includes('PATIENT INFO:')) {
+          const patientInfo = content || header.replace('PATIENT INFO:', '').trim();
           return (
             <div key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
                 <i className="fas fa-user text-blue-600"></i>
                 Patient Information
               </h4>
-              <p className="text-gray-700">{content || header.replace('PATIENT INFO:', '').trim()}</p>
+              <p className="text-gray-700 font-medium">{patientInfo}</p>
             </div>
           );
         }
         
         if (header.includes('PRESENTING COMPLAINTS:')) {
+          const complaints = content || header.replace('PRESENTING COMPLAINTS:', '').trim();
           return (
             <div key={index} className="bg-orange-50 p-4 rounded-lg border border-orange-200">
               <h4 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
                 <i className="fas fa-exclamation-triangle text-orange-600"></i>
                 Presenting Complaints
               </h4>
-              <p className="text-gray-700">{content || header.replace('PRESENTING COMPLAINTS:', '').trim()}</p>
+              <p className="text-gray-700">{complaints}</p>
             </div>
           );
         }
         
         if (header.includes('MEDICAL HISTORY:')) {
+          const history = content || header.replace('MEDICAL HISTORY:', '').trim();
           return (
             <div key={index} className="bg-green-50 p-4 rounded-lg border border-green-200">
               <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
                 <i className="fas fa-history text-green-600"></i>
                 Medical History
               </h4>
-              <p className="text-gray-700">{content || header.replace('MEDICAL HISTORY:', '').trim()}</p>
+              <p className="text-gray-700">{history}</p>
             </div>
           );
         }
@@ -72,13 +93,13 @@ const parseCaseDescription = (description: string) => {
         // Fallback for unstructured content
         return (
           <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <p className="text-gray-700 whitespace-pre-wrap">{section.trim()}</p>
+            <p className="text-gray-700 whitespace-pre-wrap">{cleanSection}</p>
           </div>
         );
       })}
     </div>
   );
-};
+}
 
 export default function CaseStudyPage() {
   const [state, setState] = useState<CaseStudyState>({

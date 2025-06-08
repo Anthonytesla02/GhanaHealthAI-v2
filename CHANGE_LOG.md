@@ -5,6 +5,41 @@ A medical chatbot application providing evidence-based healthcare guidance based
 
 ---
 
+## Version 1.3.0 - Pharmacist-Focused Case Study Enhancement
+
+### Date: June 08, 2025
+
+### Major Changes
+
+#### 1. Pharmacist-Optimized Case Study Generator
+- **Redesigned for Pharmacist Training**: Modified case studies specifically for pharmacist-level assessment
+- **Concise Case Format**: Reduced case length from lengthy narratives to focused, structured presentations
+- **Hidden Illness Names**: Removed illness display to properly test diagnostic skills without bias
+- **Structured Information Display**: Organized case data into separate, color-coded cards for better readability
+
+#### 2. Enhanced User Interface
+- **Separate Card Layout**: Patient information, presenting complaints, and medical history in distinct cards
+- **Color-Coded Sections**: 
+  - Blue cards for patient information
+  - Orange cards for presenting complaints  
+  - Green cards for medical history
+- **Icon Integration**: Added relevant icons for each section for visual clarity
+- **Improved Parsing**: Enhanced text parsing to handle markdown and plain text formatting
+
+#### 3. Case Content Optimization
+- **3-5 Key Symptoms**: Focus on most relevant symptoms for diagnostic assessment
+- **Brief Patient Info**: Name, age, gender, occupation in single line format
+- **Targeted Medical History**: Only relevant past conditions and current medications
+- **Pharmacist-Level Complexity**: Appropriate difficulty for pharmacy practice scenarios
+
+#### 4. Technical Improvements
+- **Improved Prompt Engineering**: Updated AI prompts for concise, structured case generation
+- **Better Text Processing**: Enhanced parsing of structured case descriptions
+- **Type Safety**: Added proper TypeScript interfaces for case study components
+- **Responsive Design**: Optimized layout for various screen sizes
+
+---
+
 ## Version 1.2.0 - AI-Powered Case Study Generator
 
 ### Date: June 07, 2025
