@@ -1,0 +1,49 @@
+GENERAL GOAL:
+- Build a frontend chatbot interface where users can ask medical questions.
+- Use a Mistral-based RAG system to answer questions with referenced chunks from the DOCX.
+- The system must retrieve the most relevant sections from the knowledge base and answer accurately like a real STG chatbot.
+
+✅ TECH STACK:
+- Frontend: React.js or HTML + JavaScript (simple, modern, responsive)
+- Backend: FastAPI (Python)
+- Vector DB: Pinecone
+- Embeddings: Use `text-embedding-3-large` from OpenAI or any other accurate open-source embedder
+- LLM: Use Mistral via my API key
+- Hosting: I will deploy the backend to Render.com and frontend on vercel.
+
+✅ FRONTEND REQUIREMENTS:
+- Simple, clean chatbot UI
+- Mobile format only
+- Send user questions to the FastAPI backend via POST request
+- Display AI's response below the input box
+- Include a "Sources" or "References" section with retrieved context chunks (max 3–5)
+
+✅ BACKEND REQUIREMENTS:
+1. Load preprocessed `.docx` file, chunk it using RecursiveCharacterTextSplitter (or similar) with 512 tokens and 100-token overlap
+2. Embed each chunk and store in Pinecone (use metadata like section, title)
+3. Provide an endpoint `/search` that:
+   - Accepts a POST request with a user question
+   - Embeds the query
+   - Retrieves top 3–5 most relevant chunks from Pinecone
+   - Constructs a prompt like:
+     ```
+     You are a clinical assistant referencing Ghana's Standard Treatment Guidelines.
+     Context:
+     {top_chunks}
+     Question: {user_question}
+     Answer:
+     ```
+   - Sends that prompt to the Mistral API and returns the result
+4. Create a `.env` file to hold:
+   - MISTRAL_API_KEY
+   - PINECONE_API_KEY
+   - PINECONE_ENV
+   - PINECONE_INDEX
+   - OPENAI_API_KEY (optional)
+5. Ensure CORS is enabled for frontend access
+
+✅ EXTRAS:
+- Provide instructions for uploading/processing new DOCX files (if I want to change the knowledge base later)
+- Write README with setup and deployment steps for Render.com
+
+Build the entire app structure in a single project (backend and frontend in one repo), and keep it clean and modular.
