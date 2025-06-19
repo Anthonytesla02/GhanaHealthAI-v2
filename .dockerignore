@@ -1,0 +1,10 @@
+node_modules
+.git
+.cache
+.local
+.upm
+*.zip
+dist
+.env
+README.md
+DEVELOPMENT_GUIDE.md

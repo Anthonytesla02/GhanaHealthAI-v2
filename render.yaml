@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ghana-health-ai
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MISTRAL_CASE_STUDY_API_KEY
+        sync: false
+
+databases:
+  - name: ghana-health-ai-db
+    databaseName: ghana_health_ai
+    user: ghana_health_ai_user
+    plan: free
