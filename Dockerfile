@@ -1,8 +1,13 @@
-# Use Node.js 18 as base image
-FROM node:18-alpine
+# Use Node.js 18 with full system (not alpine) for better compatibility
+FROM node:18
 
-# Install Python and build dependencies
-RUN apk add --no-cache python3 py3-pip build-base python3-dev gcc musl-dev libffi-dev
+# Install Python and system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -10,16 +15,16 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production
+# Install Node.js dependencies (including devDependencies for build)
+RUN npm install
 
 # Create Python virtual environment and install packages
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir \
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel
+RUN pip install \
     fastapi==0.104.1 \
     uvicorn==0.24.0 \
     python-docx==0.8.11 \
@@ -33,8 +38,14 @@ RUN pip install --no-cache-dir \
 # Copy application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Make build script executable and run it
+COPY build.sh ./
+RUN chmod +x build.sh
+ENV NODE_ENV=production
+RUN ./build.sh
+
+# Clean up dev dependencies after build
+RUN npm prune --production
 
 # Expose port
 EXPOSE 5000
@@ -43,4 +54,4 @@ EXPOSE 5000
 ENV PATH="/opt/venv/bin:$PATH"
 
 # Start command
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
