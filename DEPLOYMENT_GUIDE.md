@@ -104,11 +104,21 @@ Scroll down to "Environment Variables" section:
    - **Important**: Check the **"Secret"** checkbox
    - Click **"Add"**
 
-### Step 4.5: Connect Database
-1. Scroll down to "Environment Variables" section
-2. Click **"Add from Database"** button
-3. Select your `ghana-health-ai-db` from dropdown
-4. This automatically adds `DATABASE_URL` variable
+### Step 4.5: Connect Database (IMPORTANT)
+**Note: You won't see the database option until after creating the web service**
+
+For now, manually add the DATABASE_URL:
+1. Click **"Add Environment Variable"**
+2. Add Variable #4:
+   - **Key**: `DATABASE_URL`
+   - **Value**: Copy the **Internal Database URL** from your database tab
+   - Click **"Add"**
+
+**Alternative method (after service creation):**
+1. Go to your web service dashboard
+2. Click **"Environment"** tab
+3. Click **"Add from Database"** button
+4. Select `ghana-health-ai-db`
 
 ### Step 4.6: Deploy Application
 1. Scroll to bottom, click **"Create Web Service"** (blue button)
@@ -155,12 +165,22 @@ Test each feature in this exact order:
 
 ## Part 6: Common Issues & Solutions
 
-### Issue 1: Build Failed
-**Symptoms:** Red "Build failed" status, logs show errors
+### Issue 1: Docker Build Failed (Python packages)
+**Symptoms:** Error message about pip install failing, exit code 1
 **Solutions:**
-1. Check GitHub repository has all deployment files
-2. Verify Dockerfile syntax is correct
-3. Re-trigger deployment: Click **"Manual Deploy"** → **"Deploy Latest Commit"**
+1. **Immediate fix**: The updated Dockerfile should resolve this
+2. **If still failing**: 
+   - Go to your web service
+   - Click **"Manual Deploy"** → **"Clear build cache and deploy"**
+   - Wait for rebuild with new Dockerfile
+3. **Check logs** for specific Python package errors
+
+### Issue 2: Database Not Connected During Setup
+**Symptoms:** No database option when creating web service
+**Solutions:**
+1. **This is normal** - database connection happens after service creation
+2. **Manual method**: Add DATABASE_URL environment variable manually
+3. **Automatic method**: Use "Add from Database" after service is created
 
 ### Issue 2: Application Won't Start
 **Symptoms:** Build succeeds but app shows "Service Unavailable"
