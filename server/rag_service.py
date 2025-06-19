@@ -163,44 +163,65 @@ Answer:"""
 
             # Call Mistral API
             try:
-                messages = [
-                    ChatMessage(role="user", content=prompt)
-                ]
+                print(f"Making Mistral API call with {len(context_chunks)} chunks", file=sys.stderr)
                 
                 response = self.mistral_client.chat(
                     model="mistral-large-latest",
-                    messages=messages,
+                    messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                     max_tokens=800
                 )
                 
-                return response.choices[0].message.content.strip()
+                api_response = response.choices[0].message.content.strip()
+                print(f"API response length: {len(api_response)}", file=sys.stderr)
+                
+                # Check if we got a real response or generic fallback
+                if len(api_response) > 50 and "I apologize, but I'm currently unable" not in api_response:
+                    return api_response
+                else:
+                    print("API returned generic response, using manual processing", file=sys.stderr)
+                    return self._create_manual_response(query, context_chunks)
+                    
             except Exception as api_error:
                 print(f"Mistral API error: {api_error}", file=sys.stderr)
-                # Try with basic dict format as fallback
-                try:
-                    messages = [
-                        {"role": "user", "content": prompt}
-                    ]
-                    
-                    response = self.mistral_client.chat(
-                        model="mistral-large-latest", 
-                        messages=messages,
-                        temperature=0.3,
-                        max_tokens=800
-                    )
-                    
-                    return response.choices[0].message.content.strip()
-                except Exception as fallback_error:
-                    print(f"Fallback API error: {fallback_error}", file=sys.stderr)
-                    return self._get_fallback_response(query)
+                return self._create_manual_response(query, context_chunks)
             
         except Exception as e:
             print(f"Error generating response: {e}", file=sys.stderr)
-            return self._get_fallback_response(query)
+            return self._create_manual_response(query, context_chunks)
 
+    def _create_manual_response(self, query: str, context_chunks: List[Dict[str, Any]]) -> str:
+        """Create a structured response using retrieved content when API fails."""
+        if not context_chunks:
+            return self._get_fallback_response(query)
+        
+        # Extract key information from chunks
+        response_parts = []
+        response_parts.append(f"Based on Ghana Standard Treatment Guidelines (7th Edition, 2017):\n")
+        
+        # Process each relevant chunk
+        for i, chunk in enumerate(context_chunks[:3], 1):  # Limit to top 3 most relevant
+            content = chunk['content']
+            section = chunk['section']
+            
+            # Clean up the content and make it more readable
+            clean_content = content.replace('\n', ' ').strip()
+            if len(clean_content) > 300:
+                clean_content = clean_content[:300] + "..."
+            
+            response_parts.append(f"{i}. From {section}:")
+            response_parts.append(f"   {clean_content}\n")
+        
+        # Add important medical disclaimer
+        response_parts.append("\n⚠️ Important:")
+        response_parts.append("• Always consult a qualified healthcare professional for proper diagnosis")
+        response_parts.append("• Treatment should be individualized based on patient assessment")
+        response_parts.append("• Follow proper medical protocols and safety guidelines")
+        
+        return "\n".join(response_parts)
+    
     def _get_fallback_response(self, query: str) -> str:
-        """Provide a fallback response when Mistral is not available."""
+        """Provide a fallback response when no relevant content is found."""
         return f"""I apologize, but I'm currently unable to access the complete Ghana Standard Treatment Guidelines database to provide a specific answer to your question about "{query}".
 
 For accurate medical guidance, please:
