@@ -134,58 +134,49 @@ class RAGService:
     def generate_response(self, query: str, context_chunks: List[Dict[str, Any]]) -> str:
         """Generate response using Mistral AI."""
         if not self.mistral_client:
-            return self._get_fallback_response(query)
-            
-        try:
-            # Prepare context from retrieved chunks
-            context = "\n\n".join([
-                f"From {chunk['section']}: {chunk['content']}"
-                for chunk in context_chunks
-            ])
-            
-            # Construct prompt
-            prompt = f"""You are a clinical assistant specializing in Ghana's Standard Treatment Guidelines (7th Edition, 2017). Your role is to provide accurate, evidence-based medical guidance based on the official guidelines.
+            return self._create_manual_response(query, context_chunks)
 
-Context from Ghana Standard Treatment Guidelines:
+        try:
+            # Limit chunk content length for clarity
+            trimmed_chunks = context_chunks[:3]
+            context = "\n\n".join([
+                f"{chunk['section']}:\n{chunk['content'][:500].strip()}..."
+                for chunk in trimmed_chunks
+            ])
+
+            # More directive prompt
+            prompt = f"""
+Answer the following medical question strictly using the Ghana Standard Treatment Guidelines (7th Edition, 2017).
+
+Context:
 {context}
 
 Question: {query}
 
-Instructions:
-- Provide a clear, professional medical response based on the Ghana STG
-- Include specific treatment recommendations when available
-- Mention dosages, monitoring requirements, and safety considerations
-- Be concise but comprehensive
-- If the query is outside the scope of the guidelines, advise consulting healthcare professionals
-- Always emphasize the importance of proper medical assessment
+Respond concisely and professionally with specific treatment instructions from the guidelines only.
+If context is insufficient, say: "The provided medical guidelines do not cover this question."
+"""
 
-Answer:"""
+            # Debug logging
+            print("=== Mistral Prompt ===", file=sys.stderr)
+            print(prompt, file=sys.stderr)
+            print("=== End Prompt ===", file=sys.stderr)
 
-            # Call Mistral API
-            try:
-                print(f"Making Mistral API call with {len(context_chunks)} chunks", file=sys.stderr)
-                
-                response = self.mistral_client.chat(
-                    model="mistral-large-latest",
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3,
-                    max_tokens=800
-                )
-                
-                api_response = response.choices[0].message.content.strip()
-                print(f"API response length: {len(api_response)}", file=sys.stderr)
-                
-                # Check if we got a real response or generic fallback
-                if len(api_response) > 50 and "I apologize, but I'm currently unable" not in api_response:
-                    return api_response
-                else:
-                    print("API returned generic response, using manual processing", file=sys.stderr)
-                    return self._create_manual_response(query, context_chunks)
-                    
-            except Exception as api_error:
-                print(f"Mistral API error: {api_error}", file=sys.stderr)
-                return self._create_manual_response(query, context_chunks)
+            response = self.mistral_client.chat(
+                model="mistral-large-latest",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=800
+            )
+
+            content = response.choices[0].message.content.strip()
+
+            # Optional: detect fallback messages and warn in logs
+            if "consult" in content.lower() and "health" in content.lower():
+                print("⚠️ Warning: Fallback detected in Mistral response.", file=sys.stderr)
             
+            return content
+
         except Exception as e:
             print(f"Error generating response: {e}", file=sys.stderr)
             return self._create_manual_response(query, context_chunks)

@@ -1,0 +1,78 @@
+1. 🔧 Modify the generate_response() Function in server/rag_service.py
+
+Replace the existing prompt logic with this version:
+
+def generate_response(self, query: str, context_chunks: List[Dict[str, Any]]) -> str:
+    if not self.mistral_client:
+        return self._get_fallback_response(query)
+
+    try:
+        # Limit chunk content length for clarity
+        trimmed_chunks = context_chunks[:3]
+        context = "\n\n".join([
+            f"{chunk['section']}:\n{chunk['content'][:500].strip()}..."
+            for chunk in trimmed_chunks
+        ])
+
+        # More directive prompt
+        prompt = f"""
+Answer the following medical question strictly using the Ghana Standard Treatment Guidelines (7th Edition, 2017).
+
+Context:
+{context}
+
+Question: {query}
+
+Respond concisely and professionally with specific treatment instructions from the guidelines only.
+If context is insufficient, say: "The provided medical guidelines do not cover this question."
+"""
+
+        messages = [ChatMessage(role="user", content=prompt)]
+
+        response = self.mistral_client.chat(
+            model="mistral-large-latest",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=800
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # Optional: detect fallback messages and warn in logs
+        if "consult" in content.lower() and "health" in content.lower():
+            print("⚠️ Warning: Fallback detected in Mistral response.")
+        
+        return content
+
+    except Exception as e:
+        print(f"Error generating response: {e}", file=sys.stderr)
+        return self._get_fallback_response(query)
+
+
+---
+
+2. 📝 (Optional but Helpful) Add Prompt Debug Logging
+
+Add this above the messages = [...] line:
+
+print("=== Mistral Prompt ===")
+print(prompt)
+print("=== End Prompt ===")
+
+This helps confirm the context Mistral is seeing.
+
+
+---
+
+3. ✅ Confirm RAG Chunk Retrieval Logic is Working
+
+In the same file, check that this method is returning relevant chunks (already works based on your report):
+
+def retrieve_relevant_chunks(self, query: str, top_k: int = 5)
+
+No changes needed if it's already pulling chunks like those seen in your example.
+
+
+
+
+Make sure everything is working perfectly. No errors
